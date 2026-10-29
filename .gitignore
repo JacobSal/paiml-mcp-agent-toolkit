@@ -7,6 +7,11 @@ server/assets/vendor/
 *-min.js
 *-min.css
 
+# claude ignores
+.quantum-lens/
+.mcp.json
+.claude/
+
 # Exception: demo assets required for compilation (include_bytes!)
 !assets/demo/style.min.css
 !assets/demo/app.min.js
