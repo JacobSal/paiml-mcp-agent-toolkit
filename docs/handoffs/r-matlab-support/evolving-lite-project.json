@@ -1,0 +1,45 @@
+{
+  "name": "paiml-mcp-agent-toolkit",
+  "repo_path": "<repos>/paiml-mcp-agent-toolkit",
+  "branch": "add_code_analysis_support_MATLAB-R",
+  "phase": "active",
+  "created": "2026-10-23",
+  "description": "PMAT (Pragmatic AI Labs MCP Agent Toolkit), Rust, v3.42.0, upstream github.com/paiml/paiml-mcp-agent-toolkit. Code search via `pmat query` (not grep), pre-commit gate `pmat verify --format json`, feature branch + PR workflow (do not commit to master).",
+  "goals": [
+    "R + MATLAB support for pmat context via tree-sitter (plan: _memory/plans/pmat-r-matlab-language-support.md)"
+  ],
+  "progress": [
+    {
+      "date": "2026-10-23",
+      "status": "OK",
+      "summary": "Project created. Seeded from repo state: HEAD 659f6ae6b (rustls 0.23.46 RUSTSEC fix, #1491), on master. Uncommitted local mods: ROADMAP.yaml (+1095/-1236 across both files) and docs/mcp/POLYGLOT-TOOLS.md (heavily trimmed, ~645 lines changed) - origin/intent of these edits not yet established. IDE had src/services/language_registry_data.rs open."
+    },
+    {
+      "date": "2026-10-23",
+      "status": "OK",
+      "summary": "Plan pmat-r-matlab-language-support written (v1) then revised to v2 after quantum-lens review (score 7.7, record .quantum-lens/outputs/analyses/...e99d8803). Key findings: file_discovery_filters.rs:100-145 lacks 'r' (R never discovered); grep MATLAB oracle is circular -> use mtree; K1 redefined span-level; .m sniffer dropped (default MATLAB); spike-before-toolchain via PyPI tree-sitter-matlab wheel. Census mim_yaoa_conn_slide: MATLAB 184 fn/75 script/2 classdef, 538 defs, 1015 %% cells; R 180 files, 889 defs. User: own fork, will add grammar deps to Cargo.toml."
+    },
+    {
+      "date": "2026-10-28",
+      "status": "OK",
+      "summary": "Phase 0 spike DONE (no cargo): py tree-sitter 0.26 + tree-sitter-matlab 1.3.1 wheel + its neovim/tags.scm vs MATLAB R2023b mtree oracle -> 535/535 exact name+line, 0% span-ERROR => MATLAB GO. v1 K1 (file any-ERROR) would have false-killed (23/261=8.8%). ERRORs = unclosed top-level for/parfor/if in a few scripts (1.7% lines, 987/1015 %% cells recovered) - trigger not isolated, Phase 4 fixture. get./set. accessor = single token. 4 files mtree rejects (2 real syntax errors). R: no tree-sitter-r wheel (A3 false) -> R grammar check in Phase 3; getParseData oracle = 669 bindings (regex 889 overcounted tryCatch/FUN= named args). Artifacts + oracle CSVs in _memory/plans/pmat-r-matlab-language-support/."
+    },
+    {
+      "date": "2026-10-29",
+      "status": "OK",
+      "summary": "Review + handoff before restart (plans/pmat-r-matlab-language-support/HANDOFF-2026-10-29.md). User created branch add_code_analysis_support_MATLAB-R, commit 9c3ab6c7d 'phase 0' (bundles unrelated ROADMAP.yaml/POLYGLOT-TOOLS.md reformat + .gitignore of .quantum-lens/ .mcp.json .claude/ - note upstream tracks .claude/ files). Cargo.toml still lacks grammar deps; still no Rust toolchain. Plan Phase 1 updated to use user's branch; Phase 7 exclude item already done."
+    },
+    {
+      "date": "2026-10-29",
+      "status": "OK",
+      "summary": "Phase 1 toolchain DONE. Bash tool = Git for Windows (stub pacman); real MSYS2 at C:/msys64, MINGW64 env already has rust/cargo/clippy/rustfmt 1.99.1 (x86_64-pc-windows-gnu) + gcc 16.2 -> use PATH=/c/msys64/mingw64/bin:$PATH. Phase0 commit split: 85fd6b07e = ROADMAP/POLYGLOT only (local rewrite, NOT force-pushed; old commit at backup/phase0-original); .gitignore lines moved to .git/info/exclude. Cargo.toml (uncommitted): optional tree-sitter-r 1.3 / tree-sitter-matlab 1.3, features r-ast/matlab-ast (lua-ast pattern), added to all-languages. cargo build --release --features r-ast,matlab-ast OK in 36m40s, pmat.exe 57,288,704 B. Real size gate is tests/modules/binary_size_band.rs (EXPECTED 55,000,000, quiet +-5%, fail +-20%) -> +4.2%, in quiet band; the 52,428,800 in CLAUDE.md/handoff (src/tests/binary_size.rs) is stale. Grammars currently linker-stripped (unreferenced) so their size cost is not yet measured."
+    },
+    {
+      "date": "2026-11-04",
+      "status": "OK",
+      "summary": "Phase 1 closed on Windows. Test-compile fixes (ExitStatusExt per-platform split, 2 tests cfg(unix), clone_on_copy allow) keep every test; aprender-viz link fix = local .cargo/config.toml opt-level=2 for deps (dev+test). pmat verify: format/complexity/satd/clippy green; tests 21,728 pass / 83 fail (re-run 90) - all Windows-environment, none from the branch (ledger windows-test-failures.md; TDG-baseline failure was a stale cache). Handoff in docs/handoffs/r-matlab-support/ (HANDOFF.md, PLAN.md, spike, KAIRN-EXPORT.md). Kairn project d6ba2a0f."
+    }
+  ],
+  "next_step": "See docs/handoffs/r-matlab-support/HANDOFF.md. On Linux: pmat verify --format json -> ok:true. Then funnel probe on mim_yaoa_conn_slide, then Phase 2 (discovery filter 'r', detect_language r/m arms, Language enum variants; K4 <=15 errors). Re-measure binary size once grammars are referenced (quiet band upper edge 57,750,000 B; ~460 KB headroom).",
+  "failures": []
+}
