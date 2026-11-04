@@ -1,0 +1,24 @@
+23 files 26 error nodes; parent kinds [('source_file', 20), ('function_call', 5), ('arguments', 1)]
+ERROR fdr_bh.m:199  if strcmpi(report,'yes'),
+ERROR pvpmod.m:22  if ~isempty(x)
+ERROR std_topoplot_CL.m:59  if strcmpi(mode, 'together')
+ERROR cluster_comp_dipole.m:7  for clust = 1:length(clsind)
+ERROR mim_ls_merge_eeg.m:44  error('%s) Unable to find EEG file...',);
+ERROR mim_merge_liveamps.m:304  EEG = AlignLiveAmps_new(,DiaryOutputFolder);
+ERROR mim_prep_hpg_amica.m:26  tic
+ERROR anlz_emg_artifact.m:551  for subj_i = 1:length(ALLEEG)
+ERROR del_fix_study_files.m:190  for subj_i = 1:length(subj_chars)
+MISSING examplar_figures.m:573  exportgraphics(gcf,sprintf('noaxnoise_ex_freq_plot_%s.emf',strjoin(str
+MISSING fem_norm_dipfit.m:251  toc
+ERROR anlz_ants_trans_write_dip.m:54  for subj_i = 1:length(subj_names)
+ERROR e_ants_write_dip_csv.m:66  for subj_i = 1:length(subj_chars)
+MISSING a_preprocess.m:248  disp(amica_cmd{2})
+ERROR a_transfer_mri_data.m:395  for group_i = 1:size(SUBJ_PICS,2)
+ERROR b_transfer_imu_data.m:84  for subj_i = 1:length(subj_chars)
+MISSING c_check_eeg_data.m:118  filesep '_studies' filesep 'subject_mgmt' filesep 'trial_data_script_a
+ERROR d_transfer_eeg_data.m:476  for subj_i = 1:length(subjs)
+ERROR e_speed_anl_plots.m:324  cellfun(@(x) disp(x),txt_store);
+MISSING h_dip_plot_fig.m:498  % close(fig);
+ERROR spca_e_psd_gen.m:179  parfor subj_i = 1:length(subj_chars)
+MISSING spca_i_psd_dip_plots.m:1377  % close(fig);
+ERROR spca_sbs_e_psd_gen.m:167  parfor subj_i = 1:length(STUDY_REST.datasetinfo)

@@ -1,0 +1,11 @@
+oracle defs (parseable files): 535   tree-sitter defs: 535
+exact name+line matches: 535  (100.00%)
+oracle-only (missed): 0   tree-sitter-only (extra): 0
+span-level ERROR/MISSING: 0/535 (0.00%)
+file-level any-ERROR (v1 K1): 23/261 (8.81%)
+K1 (v2): mismatch 0.00% / span-error 0.00% -> GO
+mtree parse_error files (excluded):
+  src/_funcs/mim/mim_ls_merge_eeg.m: tree-sitter found 1 defs, file has_error=1
+  src/_funcs/mim/mim_merge_liveamps.m: tree-sitter found 4 defs, file has_error=1
+  src/a_prep_scripts/_legacy/fem_norm_dipfit.m: tree-sitter found 0 defs, file has_error=1
+  src/b_epoch_basic/e_speed_anl_plots.m: tree-sitter found 0 defs, file has_error=1
