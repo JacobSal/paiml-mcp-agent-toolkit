@@ -68,13 +68,11 @@ fn skip_verdict_does_not_depend_on_the_callers_cwd() {
 /// Path spelling is not file identity: a symlinked spelling contains no
 /// `"/tests/"` substring at all, yet resolves into `tests/`.
 #[test]
+#[cfg(unix)]
 fn skip_verdict_follows_the_resolved_path_not_the_spelling() {
     let (dir, file) = tests_fixture();
     let link = dir.path().join("aliased");
-    #[cfg(unix)]
     std::os::unix::fs::symlink(file.parent().expect("parent"), &link).expect("symlink");
-    #[cfg(not(unix))]
-    return;
 
     let aliased = link.join("m00.rs");
     assert!(

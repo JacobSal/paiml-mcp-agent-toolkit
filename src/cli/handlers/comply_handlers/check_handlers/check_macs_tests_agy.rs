@@ -39,6 +39,7 @@ mod tests_macs_agy {
         std::fs::write(&path, body).unwrap();
     }
 
+    #[cfg_attr(not(unix), allow(unused_variables))]
     fn make_executable(path: &Path) {
         #[cfg(unix)]
         {
@@ -191,19 +192,17 @@ mod tests_macs_agy {
     }
 
     #[test]
+    #[cfg(unix)]
     fn cb1664_red_when_the_hook_script_is_not_executable() {
+        use std::os::unix::fs::PermissionsExt;
         let dir = valid_tree();
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let path = dir.path().join(".agents/hooks/pmat-quality-feedback.sh");
-            let mut perms = std::fs::metadata(&path).unwrap().permissions();
-            perms.set_mode(0o644);
-            std::fs::set_permissions(&path, perms).unwrap();
-            let check = check_agy_hooks_schema(dir.path());
-            assert_eq!(check.status, CheckStatus::Fail, "{}", check.message);
-            assert!(check.message.contains("not executable"), "{}", check.message);
-        }
+        let path = dir.path().join(".agents/hooks/pmat-quality-feedback.sh");
+        let mut perms = std::fs::metadata(&path).unwrap().permissions();
+        perms.set_mode(0o644);
+        std::fs::set_permissions(&path, perms).unwrap();
+        let check = check_agy_hooks_schema(dir.path());
+        assert_eq!(check.status, CheckStatus::Fail, "{}", check.message);
+        assert!(check.message.contains("not executable"), "{}", check.message);
     }
 
     #[test]

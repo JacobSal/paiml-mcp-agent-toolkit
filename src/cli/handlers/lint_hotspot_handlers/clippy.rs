@@ -136,7 +136,10 @@ mod lint_hotspot_measurement_tests {
     //! CLEAN BILL OF HEALTH for every input. Each test here fails on the
     //! pre-fix code; the observed wrong value is named in the assertion.
     use super::*;
+    #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;
+    #[cfg(windows)]
+    use std::os::windows::process::ExitStatusExt;
     use std::process::{ExitStatus, Output};
 
     /// One real `cargo clippy --message-format=json` record, verbatim from a
@@ -147,8 +150,14 @@ mod lint_hotspot_measurement_tests {
     const BUILD_FINISHED: &str = r#"{"reason":"build-finished","success":true}"#;
 
     fn output_with(stdout: &str, code: i32) -> Output {
+        // Unix takes a raw wait status (exit code in bits 8..16); Windows takes
+        // the exit code itself. Both yield `status.code() == Some(code)`.
+        #[cfg(unix)]
+        let status = ExitStatus::from_raw(code << 8);
+        #[cfg(windows)]
+        let status = ExitStatus::from_raw(code as u32);
         Output {
-            status: ExitStatus::from_raw(code << 8),
+            status,
             stdout: stdout.as_bytes().to_vec(),
             stderr: Vec::new(),
         }

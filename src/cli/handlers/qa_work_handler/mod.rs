@@ -429,14 +429,23 @@ mod r5_pure_helpers_tests {
     //! impl_validation.rs. Each helper wears a `#[contract(...)]`
     //! decorator for invariant enforcement.
     use super::*;
+    #[cfg(unix)]
     use std::os::unix::process::ExitStatusExt;
+    #[cfg(windows)]
+    use std::os::windows::process::ExitStatusExt;
     use std::process::{ExitStatus, Output};
 
     // ── classify_command_outcome ────────────────────────────────────────────
 
+    /// `success_code` is a Unix raw wait status (`1 << 8` = exit 1). On Windows
+    /// it becomes the exit code verbatim: 0 stays success, non-zero stays failure.
     fn ok_output(success_code: i32) -> std::io::Result<Output> {
+        #[cfg(unix)]
+        let status = ExitStatus::from_raw(success_code);
+        #[cfg(windows)]
+        let status = ExitStatus::from_raw(success_code as u32);
         Ok(Output {
-            status: ExitStatus::from_raw(success_code),
+            status,
             stdout: vec![],
             stderr: vec![],
         })
