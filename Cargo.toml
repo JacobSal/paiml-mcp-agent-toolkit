@@ -258,6 +258,8 @@ tree-sitter-python = { version = "0.25", optional = true }
 tree-sitter-lua = { version = "0.5", optional = true }
 tree-sitter-kotlin-ng = { version = "1.1", optional = true }
 tree-sitter-rust = { version = "0.24", optional = true }
+tree-sitter-r = { version = "1.3", optional = true }
+tree-sitter-matlab = { version = "1.3", optional = true }
 # Sprint 46 Phase 6: Removed unused tree-sitter parsers (0 references - cargo-machete verified)
 # tree-sitter-c-sharp = { version = "0.23", optional = true }  # 0 references
 # tree-sitter-java = { version = "0.23", optional = true }      # 0 references
@@ -501,7 +503,7 @@ doc-indexing = ["pdf-extract"]  # PDF text extraction for `pmat query --docs`
 # crate had zero `use` sites in pmat. It was pulling a full dependency subtree to
 # provide nothing.
 org-intelligence = []
-all-languages = ["rust-ast", "typescript-ast", "python-ast", "c-ast", "cpp-ast", "ruchy-ast", "go-ast", "wasm-ast", "deep-wasm", "shell-ast", "php-ast", "swift-ast", "lua-ast", "lean-ast"]
+all-languages = ["rust-ast", "typescript-ast", "python-ast", "c-ast", "cpp-ast", "ruchy-ast", "go-ast", "wasm-ast", "deep-wasm", "shell-ast", "php-ast", "swift-ast", "lua-ast", "lean-ast", "r-ast", "matlab-ast"]
 most-languages = ["rust-ast", "typescript-ast", "python-ast", "c-ast", "cpp-ast", "go-ast", "shell-ast"]
 # Sprint 46 Phase 6: Removed java-ast, csharp-ast, ruby-ast, scala-ast (0 references)
 # Note: go-ast and shell-ast kept in most-languages (unified_go_analyzer.rs now has proper feature gates)
@@ -577,6 +579,8 @@ rust-ast = ["quote", "proc-macro2", "tree-sitter", "tree-sitter-rust"]
 typescript-ast = ["rust-ast", "swc_ecma_parser", "swc_common", "swc_ecma_ast", "swc_ecma_visit", "tree-sitter", "tree-sitter-typescript", "tree-sitter-javascript", "polyglot-typescript"]
 python-ast = ["rust-ast", "tree-sitter", "tree-sitter-python"]
 lua-ast = ["tree-sitter", "tree-sitter-lua"]
+r-ast = ["tree-sitter", "tree-sitter-r"]
+matlab-ast = ["tree-sitter", "tree-sitter-matlab"]
 # ✅ Migration complete! All 5 files migrated from rustpython-parser to tree-sitter-python:
 #   - tdg/analyzer_ast.rs (Phase 4)
 #   - services/mutation/python_adapter.rs (Phase 5a)
