@@ -1,0 +1,39 @@
+# Run from this directory: docker compose up -d --build
+# Needs a local .env holding PMAT_MCP_HTTP_TOKEN (at least 16 characters).
+#
+# Clients on the host use http://127.0.0.1:8765/ and MetaMCP uses
+# http://pmat-mcp:8765/. MCP is served at the root path, not /mcp. Any other
+# hostname must be added to PMAT_MCP_ALLOWED_ORIGINS or it gets 403.
+# Tools see repos under /work/repos, so pass paths like /work/repos/<repo-name>.
+# Search tools use one index across all repos.
+
+services:
+  pmat-mcp:
+    build:
+      context: .
+      args:
+        BUILD_JOBS: ${BUILD_JOBS:-6}
+    image: pmat-mcp:local
+    container_name: pmat-mcp
+    restart: unless-stopped
+    environment:
+      PMAT_MCP_HTTP_TOKEN: ${PMAT_MCP_HTTP_TOKEN:?set PMAT_MCP_HTTP_TOKEN in .env}
+      PMAT_MCP_ALLOWED_ORIGINS: http://pmat-mcp:8765
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - pmat-work:/work
+      - ${REPOS_ROOT:-C:/Users/jsalm/Documents/GitHub}:/work/repos:ro
+      - pmat-cache:/home/pmat/.cache
+    mem_limit: 4g
+    networks:
+      - metamcp
+
+volumes:
+  pmat-work:
+  pmat-cache:
+
+networks:
+  metamcp:
+    external: true
+    name: metamcp-opened_metamcp-network
