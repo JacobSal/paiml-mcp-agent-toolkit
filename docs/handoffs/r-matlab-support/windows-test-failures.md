@@ -8,7 +8,14 @@ already-built test binary directly:
 - **Run 2** (this table): **90 failed**. The difference between the runs is flakiness from shared temp
   and cache state, and from a 1,800 s measurement timeout.
 
-## Verdict: none of these are caused by this branch
+## Verdict: one of these was caused by this branch
+
+**Correction, 2026-11-06.** This section first said that none of the failures were caused by the
+branch. That was wrong. `the_committed_ratchet_holds_at_head` also failed on Linux, the first time
+the branch was gated there: `allow_attributes_src` measured 498 against a baseline of 497, because
+commit `1bac709ba` added `#[allow(clippy::clone_on_copy)]` in
+`src/models/unified_ast_types_tests.rs`. Removing that attribute cleared the failure on Linux, and
+`pmat verify` returned `ok: true`. The rest of this ledger is the original Windows measurement.
 
 The branch changes only three things: Cargo features that are off by default, five test files,
 and docs. Two checks back the verdict:
@@ -31,7 +38,7 @@ and docs. Two checks back the verdict:
 | Case-insensitive filesystem, so `.idea`/`.vscode`/`Thumbs.db` probes and `GH-42` resolve differently | `hygiene_scorer` x9, `qa_work_handler::impl_spec_tests` |
 | Generated-file comparisons that differ because of line endings or paths (`mcp.json`, `.agents/hooks.json`, unrun-tests ledger) | `tool_manifest`, `check_macs`, `unrun_tests` |
 | tokio `block_in_place` in a current-thread runtime, at `quality_checks_part2_security_duplicates.rs:162` (unclear why it only shows here) | `quality_gate_*` x10 |
-| Repo-wide ratchet measurements that time out or read stale cache | `.pmat-ratchet.toml is red at HEAD`, `tdg_baseline` |
+| Repo-wide ratchet measurements that time out or read stale cache | `tdg_baseline` (`.pmat-ratchet.toml is red at HEAD` was listed here too, but see the correction above) |
 
 **Consequence:** this machine cannot produce `pmat verify` `ok:true`. To get the real green gate, run
 `pmat verify --format json` on Linux (WSL2, CI or the next machine) before opening the upstream PR.

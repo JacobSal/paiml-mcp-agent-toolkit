@@ -37,7 +37,7 @@
     {
       "date": "2026-11-04",
       "status": "OK",
-      "summary": "Phase 1 closed on Windows. Test-compile fixes (ExitStatusExt per-platform split, 2 tests cfg(unix), clone_on_copy allow) keep every test; aprender-viz link fix = local .cargo/config.toml opt-level=2 for deps (dev+test). pmat verify: format/complexity/satd/clippy green; tests 21,728 pass / 83 fail (re-run 90) - all Windows-environment, none from the branch (ledger windows-test-failures.md; TDG-baseline failure was a stale cache). Handoff in docs/handoffs/r-matlab-support/ (HANDOFF.md, PLAN.md, spike, KAIRN-EXPORT.md). Kairn project d6ba2a0f."
+      "summary": "Phase 1 closed on Windows. Test-compile fixes (ExitStatusExt per-platform split, 2 tests cfg(unix), clone_on_copy allow) keep every test; aprender-viz link fix = local .cargo/config.toml opt-level=2 for deps (dev+test). pmat verify: format/complexity/satd/clippy green; tests 21,728 pass / 83 fail (re-run 90) - all Windows-environment, none from the branch (corrected 2026-11-06: the ratchet failure was, see windows-test-failures.md) (ledger windows-test-failures.md; TDG-baseline failure was a stale cache). Handoff in docs/handoffs/r-matlab-support/ (HANDOFF.md, PLAN.md, spike, KAIRN-EXPORT.md). Kairn project d6ba2a0f."
     }
   ],
   "next_step": "See docs/handoffs/r-matlab-support/HANDOFF.md. On Linux: pmat verify --format json -> ok:true. Then funnel probe on mim_yaoa_conn_slide, then Phase 2 (discovery filter 'r', detect_language r/m arms, Language enum variants; K4 <=15 errors). Re-measure binary size once grammars are referenced (quiet band upper edge 57,750,000 B; ~460 KB headroom).",

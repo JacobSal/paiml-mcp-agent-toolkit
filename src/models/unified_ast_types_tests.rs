@@ -614,7 +614,6 @@ mod unified_ast_types_tests {
     }
 
     #[test]
-    #[allow(clippy::clone_on_copy)] // deliberate: exercises the explicit `impl Clone`
     fn test_node_metadata_clone() {
         let metadata = NodeMetadata { complexity: 42 };
         // Invoke the explicit Clone impl (not the implicit Copy) so the
