@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`PMAT_MCP_ALLOWED_ORIGINS` admits extra hosts past the HTTP transport's DNS rebinding
+  guard.** A comma-separated list such as `http://pmat-mcp:8765` adds to the `localhost`,
+  `127.0.0.1` and `[::1]` defaults, so a caller on a private network, such as an MCP hub
+  using a container name, no longer gets `403`. A malformed entry stops `pmat serve` from
+  starting with exit 4. The bearer token is still required.
+
 ## [3.42.0] - 2026-09-28
 
 ### Added

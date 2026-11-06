@@ -176,6 +176,14 @@ PMAT_MCP_HTTP_TOKEN=too-short-123 pmat serve --transport http --port 8765
 streamable transport rejects the request without it, and `curl -f` turns that into an
 empty string with no message — so probe with plain `curl -s` while debugging.
 
+**4. Only `localhost`, `127.0.0.1` and `[::1]` pass the `Host` check by default.** Any
+other `Host` gets `403` from the DNS rebinding guard, including a container name on a
+private network. Add hosts with a comma-separated list; the token is still required.
+
+```bash
+PMAT_MCP_ALLOWED_ORIGINS=http://pmat-mcp:8765 pmat serve --transport http --host 0.0.0.0 --port 8765
+```
+
 ```bash
 curl -s -w '\n-> HTTP %{http_code}\n' -X POST http://127.0.0.1:8765/ \
   -H "Authorization: Bearer $PMAT_MCP_HTTP_TOKEN" \

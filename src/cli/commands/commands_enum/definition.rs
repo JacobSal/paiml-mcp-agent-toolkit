@@ -965,6 +965,12 @@ pub enum Commands {
     /// client of a shared endpoint. Compiling the transport in does not start
     /// it: only this subcommand binds a socket.
     ///
+    /// Requests whose `Host` is not `localhost`, `127.0.0.1` or `[::1]` get 403
+    /// from the DNS rebinding guard, whatever the bind address. To admit another
+    /// host, such as a container name, set `PMAT_MCP_ALLOWED_ORIGINS` to a
+    /// comma-separated list like `http://pmat-mcp:8765`. A malformed entry stops
+    /// the server from starting, and the token is still required.
+    ///
     /// The other `--transport` values — `web-socket`, `http-sse`, `both`,
     /// `all` — are NOT IMPLEMENTED and exit 2.
     ///

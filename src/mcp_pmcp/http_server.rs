@@ -154,6 +154,61 @@ impl AuthProvider for BearerToken {
     }
 }
 
+/// Environment variable listing extra origins the DNS rebinding guard accepts.
+///
+/// pmcp answers 403 to any `Host` other than `localhost`, `127.0.0.1` or
+/// `[::1]`, which also refuses a legitimate caller on a private network, such
+/// as an MCP hub reaching this server by its container name. The value is a
+/// comma-separated list like `http://pmat-mcp:8765`. It adds to the localhost
+/// defaults, and the bearer token is still required.
+pub const ALLOWED_ORIGINS_ENV: &str = "PMAT_MCP_ALLOWED_ORIGINS";
+
+/// Parse a comma-separated origin list, ignoring blank entries.
+///
+/// Strict on purpose. pmcp silently drops an entry with no scheme, so a bare
+/// `pmat-mcp` would start cleanly and go on answering 403. There is no wildcard
+/// either: a deployment that wants the guard off should have to say so in code.
+fn parse_allowed_origins(raw: &str) -> Result<Vec<String>> {
+    raw.split(',')
+        .map(str::trim)
+        .filter(|entry| !entry.is_empty())
+        .map(|entry| {
+            if is_origin(entry) {
+                Ok(entry.to_string())
+            } else {
+                bail!(
+                    "{ALLOWED_ORIGINS_ENV}: `{entry}` is not an origin; expected \
+                     http://host[:port] or https://host[:port]"
+                )
+            }
+        })
+        .collect()
+}
+
+/// Whether `entry` is a scheme plus a host, with no path and no wildcard.
+fn is_origin(entry: &str) -> bool {
+    let authority = entry
+        .strip_prefix("https://")
+        .or_else(|| entry.strip_prefix("http://"));
+    authority.is_some_and(|a| {
+        !a.is_empty()
+            && !a.starts_with(':')
+            && a.chars()
+                .all(|c| c.is_ascii_alphanumeric() || "-._:[]".contains(c))
+    })
+}
+
+/// Read [`ALLOWED_ORIGINS_ENV`]. Unset means no extra origins.
+pub fn allowed_origins_from_env() -> Result<Vec<String>> {
+    match std::env::var(ALLOWED_ORIGINS_ENV) {
+        Ok(raw) => parse_allowed_origins(&raw).map_err(crate::cli_exit::configuration_error),
+        Err(std::env::VarError::NotPresent) => Ok(Vec::new()),
+        Err(e) => Err(crate::cli_exit::configuration_error(anyhow::anyhow!(
+            "{ALLOWED_ORIGINS_ENV}: {e}"
+        ))),
+    }
+}
+
 /// Start the streamable-HTTP MCP endpoint. Returns the bound address and the
 /// server task.
 ///
@@ -162,21 +217,33 @@ impl AuthProvider for BearerToken {
 /// `Mcp-Session-Id` entirely, and server-held session state is the pattern it
 /// dropped. Starting stateless means the transport does not have to be
 /// re-architected when pmat moves to that revision.
+///
+/// `extra_origins` extends the DNS rebinding guard's localhost defaults. When
+/// it is empty the config stays `None`: `AllowedOrigins::explicit` on an empty
+/// list would mean `any()`, which turns the guard off.
 #[cfg(feature = "mcp-http")]
 pub async fn serve(
     addr: SocketAddr,
     auth: BearerToken,
+    extra_origins: Vec<String>,
 ) -> Result<(SocketAddr, tokio::task::JoinHandle<()>)> {
     use pmcp::server::streamable_http_server::{StreamableHttpServer, StreamableHttpServerConfig};
+    use pmcp::server::tower_layers::AllowedOrigins;
 
     let provider: Arc<dyn AuthProvider> = Arc::new(auth);
     let server =
         crate::mcp_pmcp::simple_unified_server::SimpleUnifiedServer::build_server(Some(provider))
             .map_err(|e| anyhow::anyhow!("building the MCP tool surface failed: {e}"))?;
 
+    let allowed_origins = (!extra_origins.is_empty()).then(|| {
+        let mut origins = AllowedOrigins::localhost().origins().to_vec();
+        origins.extend(extra_origins);
+        AllowedOrigins::explicit(origins)
+    });
     let config = StreamableHttpServerConfig {
         session_id_generator: None, // stateless
         enable_json_response: true,
+        allowed_origins,
         ..Default::default()
     };
     let http =
@@ -191,6 +258,7 @@ pub async fn serve(
 pub async fn serve(
     _addr: SocketAddr,
     _auth: BearerToken,
+    _extra_origins: Vec<String>,
 ) -> Result<(SocketAddr, tokio::task::JoinHandle<()>)> {
     bail!(
         "this pmat was built without the `mcp-http` feature, so the streamable-HTTP MCP \
@@ -273,6 +341,38 @@ mod tests {
     }
 
     #[test]
+    fn allowed_origins_are_split_and_trimmed() {
+        let got = parse_allowed_origins(" http://pmat-mcp:8765 ,,https://[::2]:9000,")
+            .expect("valid list");
+        assert_eq!(got, ["http://pmat-mcp:8765", "https://[::2]:9000"]);
+    }
+
+    /// An empty list must stay empty rather than erroring, because `serve` is
+    /// what keeps it away from `AllowedOrigins::explicit`, where it means `any()`.
+    #[test]
+    fn a_blank_allowed_origins_value_adds_nothing() {
+        assert!(parse_allowed_origins("").expect("blank").is_empty());
+        assert!(parse_allowed_origins(" , ").expect("blank").is_empty());
+    }
+
+    #[test]
+    fn a_malformed_allowed_origin_is_refused() {
+        for bad in [
+            "pmat-mcp",
+            "pmat-mcp:8765",
+            "*",
+            "http://*",
+            "http://",
+            "http://:8765",
+            "http://pmat-mcp:8765/path",
+            "ftp://pmat-mcp",
+        ] {
+            let err = parse_allowed_origins(bad).expect_err(bad).to_string();
+            assert!(err.contains(ALLOWED_ORIGINS_ENV), "got: {err}");
+        }
+    }
+
+    #[test]
     fn auth_is_required_and_advertises_bearer() {
         let auth = BearerToken::new("0123456789abcdef0123").expect("token");
         assert!(auth.is_required(), "optional auth is not auth");
@@ -288,11 +388,55 @@ mod http_e2e_tests {
     //! looks right and serves open.
     use super::*;
 
-    async fn start() -> (std::net::SocketAddr, tokio::task::JoinHandle<()>) {
+    async fn start_with(
+        extra_origins: Vec<String>,
+    ) -> (std::net::SocketAddr, tokio::task::JoinHandle<()>) {
         let auth = BearerToken::new("0123456789abcdef0123").expect("token");
-        serve("127.0.0.1:0".parse().expect("addr"), auth)
+        serve("127.0.0.1:0".parse().expect("addr"), auth, extra_origins)
             .await
             .expect("server starts")
+    }
+
+    async fn start() -> (std::net::SocketAddr, tokio::task::JoinHandle<()>) {
+        start_with(Vec::new()).await
+    }
+
+    /// Status of a `tools/list` sent with this `Host` and optional token.
+    async fn status_for(addr: std::net::SocketAddr, host: &str, token: Option<&str>) -> u16 {
+        let mut request = reqwest::Client::new()
+            .post(format!("http://{addr}/"))
+            .header("Host", host)
+            .header("Accept", "application/json, text/event-stream")
+            .json(&serde_json::json!({
+                "jsonrpc":"2.0","id":1,"method":"tools/list","params":{}
+            }));
+        if let Some(token) = token {
+            request = request.header("Authorization", format!("Bearer {token}"));
+        }
+        request.send().await.expect("request").status().as_u16()
+    }
+
+    const TOKEN: Option<&str> = Some("0123456789abcdef0123");
+
+    #[tokio::test]
+    async fn without_extra_origins_a_foreign_host_is_refused() {
+        let (addr, handle) = start().await;
+        assert_eq!(status_for(addr, "pmat-mcp:8765", TOKEN).await, 403);
+        assert_eq!(status_for(addr, "localhost:8765", TOKEN).await, 200);
+        handle.abort();
+    }
+
+    /// The setting adds one host. It must not drop the localhost defaults, open
+    /// the guard to other hosts, or stand in for the token.
+    #[tokio::test]
+    async fn an_extra_origin_admits_only_that_host_and_keeps_auth() {
+        let (addr, handle) = start_with(vec!["http://pmat-mcp:8765".to_string()]).await;
+        assert_eq!(status_for(addr, "pmat-mcp:8765", TOKEN).await, 200);
+        assert_eq!(status_for(addr, "localhost:8765", TOKEN).await, 200);
+        assert_eq!(status_for(addr, "127.0.0.1:8765", TOKEN).await, 200);
+        assert_eq!(status_for(addr, "evil.example:8765", TOKEN).await, 403);
+        assert_eq!(status_for(addr, "pmat-mcp:8765", None).await, 401);
+        handle.abort();
     }
 
     #[tokio::test]

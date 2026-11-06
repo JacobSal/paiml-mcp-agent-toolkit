@@ -165,7 +165,7 @@ fn resolve_token(
 /// and hold the help to it.
 async fn serve_streamable_http(host: &str, port: u16) -> Result<()> {
     use crate::cli::handlers::mcp_onboarding::write_connection_banner;
-    use crate::mcp_pmcp::http_server::{serve, BearerToken};
+    use crate::mcp_pmcp::http_server::{allowed_origins_from_env, serve, BearerToken};
 
     let addr: std::net::SocketAddr = format!("{host}:{port}")
         .parse()
@@ -176,7 +176,7 @@ async fn serve_streamable_http(host: &str, port: u16) -> Result<()> {
     // supplied one — generation supplies a secret, it never waives the check.
     let auth = BearerToken::new(token.clone())?;
 
-    let (bound, handle) = serve(addr, auth).await?;
+    let (bound, handle) = serve(addr, auth, allowed_origins_from_env()?).await?;
     let _ = write_connection_banner(
         std::io::stderr(),
         &bound,
